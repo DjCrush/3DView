@@ -1,6 +1,6 @@
 #include "mesh.h"
 
-void Mesh::DrawGuro(int nX, int nY, double dScale)
+void Mesh::DrawGuro(int nX, int nY, double dScale) const
 {
 	for (const auto& objFace : m_vecFace)
 	{
@@ -29,7 +29,7 @@ void Mesh::DrawGuro(int nX, int nY, double dScale)
 	}
 }
 
-void Mesh::Draw(int nX, int nY, double dScale)
+void Mesh::Draw(int nX, int nY, double dScale) const
 {
 	for (const auto& objFace : m_vecFace)
 	{
@@ -87,91 +87,103 @@ void Mesh::Rotate(double dAngleX)
 	}
 }
 
-void Mesh::ReadFromFile(const std::string& sFileName)
+void Mesh::CreateFromFile(const std::string& sFileName)
 {
-	std::vector<std::tuple<double, double, double>> vecVertex;
-	std::vector<std::tuple<double, double, double>> vecNormal;
+	struct Point { double x, y, z; };
+	std::vector<Point> vecVertex;
+	std::vector<Point> vecNormal;
 	std::ifstream in(sFileName);
 	if (in)
 	{
 		// get length of file
 		in.seekg(0, in.end);
-		auto nLengthFile{ in.tellg() };
+		size_t lengthOfFile = in.tellg();
 		in.seekg(0, in.beg);
-		auto nOldTime{ SDL_GetTicks() + 200 };
+		auto DrawProgressWidget = [&in, &lengthOfFile]()
+		{
+			while (true)
+			{
+				size_t currentSize = in.tellg();
+				SDL_Rect Rect{0, 0, static_cast<int>(SCREEN_WIDTH * static_cast<double>(currentSize) / lengthOfFile), 38};
+				SDL_SetRenderDrawColor(renderer, 0, 255, 0, SDL_ALPHA_OPAQUE);
+				SDL_RenderFillRect(renderer, &Rect);
+				SDL_RenderPresent(renderer);
+				std::this_thread::sleep_for(std::chrono::milliseconds(40));
+				if (currentSize >= lengthOfFile)
+				{
+					break;
+				}
+			}
+			SDL_Rect Rect{ 0, 0, SCREEN_WIDTH, 38 };
+			SDL_SetRenderDrawColor(renderer, 0, 255, 0, SDL_ALPHA_OPAQUE);
+			SDL_RenderFillRect(renderer, &Rect);
+			SDL_RenderPresent(renderer);
+		};
+		
+
+		std::thread threadOfProgressBar(DrawProgressWidget);
+
 		std::string line;
 		while (std::getline(in, line))
 		{
-			std::string sTempLine;
-			std::stringstream sStreamTemp(line);
-			sStreamTemp >> sTempLine;
-			if (sTempLine == "v")
+			std::vector<std::string> vecStr = Split(line);
+			if (!vecStr.empty())
 			{
-				double dX, dY, dZ;
-				sStreamTemp >> dX >> dY >> dZ;
-				vecVertex.push_back(std::make_tuple(dX, -dY, dZ));
-			}
-			if (sTempLine == "vn")
-			{
-				double dX, dY, dZ;
-				sStreamTemp >> dX >> dY >> dZ;
-				vecNormal.push_back(std::make_tuple(dX, dY, dZ));
-			}
-			if (sTempLine == "f")
-			{
-				std::string item_t;
-				std::vector<std::tuple<int, int, int>> vector_t;
-				int nCounterVertex{ 0 };
-				while (sStreamTemp >> item_t)
+				if (vecStr[0] == "v")
 				{
-					std::stringstream item{ item_t };
-					std::string sIndexVertex{ "0" }, sIndexTexture{ "0" }, sIndexNormal{ "0" };
-					std::getline(item, sIndexVertex, '/');
-					std::getline(item, sIndexTexture, '/');
-					std::getline(item, sIndexNormal);
-					std::tuple<int, int, int> tp = std::make_tuple(std::stoi(sIndexVertex), std::stoi(sIndexTexture), std::stoi(sIndexNormal));
-					vector_t.push_back(tp);
+					vecVertex.emplace_back(Point{ std::stod(vecStr[1]), -std::stod(vecStr[2]), std::stod(vecStr[3]) });
+				}
+				if (vecStr[0] == "vn")
+				{
+					vecNormal.emplace_back(Point{ std::stod(vecStr[1]), std::stod(vecStr[2]), std::stod(vecStr[3]) });
+				}
+				if (vecStr[0] == "f")
+				{
+					std::vector<std::string> vecStr1 = Split(vecStr[1], '/');
+					std::vector<std::string> vecStr2 = Split(vecStr[2], '/');
+					std::vector<std::string> vecStr3 = Split(vecStr[3], '/');
+					m_vecFace.emplace_back(Face{
+						Vertex{vecVertex[std::stoi(vecStr1[0]) - 1].x, vecVertex[std::stoi(vecStr1[0]) - 1].y, vecVertex[std::stoi(vecStr1[0]) - 1].z, 0.0, 0.0, 0.0},
+						Vertex{vecVertex[std::stoi(vecStr2[0]) - 1].x, vecVertex[std::stoi(vecStr2[0]) - 1].y, vecVertex[std::stoi(vecStr2[0]) - 1].z, 0.0, 0.0, 0.0},
+						Vertex{vecVertex[std::stoi(vecStr3[0]) - 1].x, vecVertex[std::stoi(vecStr3[0]) - 1].y, vecVertex[std::stoi(vecStr3[0]) - 1].z, 0.0, 0.0, 0.0},
+						});
 
-					if (nCounterVertex == 2)
+					if (vecStr.size() > 4)
 					{
-						size_t point1 = std::get<0>(vector_t[0]) - 1;
-						size_t point2 = std::get<0>(vector_t[1]) - 1;
-						size_t point3 = std::get<0>(vector_t[2]) - 1;
-						size_t point_normal1 = std::get<2>(vector_t[0]) - 1;
-						size_t point_normal2 = std::get<2>(vector_t[1]) - 1;
-						size_t point_normal3 = std::get<2>(vector_t[2]) - 1;
-						m_vecFace.push_back(Face{ Vertex{std::get<0>(vecVertex[point1]), std::get<1>(vecVertex[point1]), std::get<2>(vecVertex[point1]), std::get<0>(vecNormal[point_normal1]), std::get<1>(vecNormal[point_normal1]), std::get<2>(vecNormal[point_normal1])},
-										Vertex{std::get<0>(vecVertex[point2]), std::get<1>(vecVertex[point2]), std::get<2>(vecVertex[point2]), std::get<0>(vecNormal[point_normal2]), std::get<1>(vecNormal[point_normal2]), std::get<2>(vecNormal[point_normal2]) },
-										Vertex{std::get<0>(vecVertex[point3]), std::get<1>(vecVertex[point3]), std::get<2>(vecVertex[point3]), std::get<0>(vecNormal[point_normal3]), std::get<1>(vecNormal[point_normal3]), std::get<2>(vecNormal[point_normal3])} });
-
+						std::vector<std::string> vecStr4 = Split(vecStr[4], '/');
+						m_vecFace.emplace_back(Face{
+							Vertex{vecVertex[std::stoi(vecStr1[0]) - 1].x, vecVertex[std::stoi(vecStr1[0]) - 1].y, vecVertex[std::stoi(vecStr1[0]) - 1].z, 0.0, 0.0, 0.0},
+							Vertex{vecVertex[std::stoi(vecStr3[0]) - 1].x, vecVertex[std::stoi(vecStr3[0]) - 1].y, vecVertex[std::stoi(vecStr3[0]) - 1].z, 0.0, 0.0, 0.0},
+							Vertex{vecVertex[std::stoi(vecStr4[0]) - 1].x, vecVertex[std::stoi(vecStr4[0]) - 1].y, vecVertex[std::stoi(vecStr4[0]) - 1].z, 0.0, 0.0, 0.0},
+							});
 					}
-					else if (nCounterVertex > 2)
-					{
-					//	size_t point1 = std::get<0>(vector_t[nCounterVertex - 1]) - 1;
-					//	size_t point2 = std::get<0>(vector_t[nCounterVertex]) - 1;
-					//	size_t point3 = std::get<0>(vector_t[nCounterVertex - 2]) - 1;
-					//	size_t point_normal1 = std::get<2>(vector_t[nCounterVertex - 1]) - 1;
-					//	size_t point_normal2 = std::get<2>(vector_t[nCounterVertex]) - 1;
-					//	size_t point_normal3 = std::get<2>(vector_t[nCounterVertex - 2]) - 1;
-					//	m_vecFace.push_back(Face{ Vertex{std::get<0>(vecVertex[point1]), std::get<1>(vecVertex[point1]), std::get<2>(vecVertex[point1]), std::get<0>(vecNormal[point_normal1]), std::get<1>(vecNormal[point_normal1]), std::get<2>(vecNormal[point_normal1])},
-					//					Vertex{std::get<0>(vecVertex[point2]), std::get<1>(vecVertex[point2]), std::get<2>(vecVertex[point2]), std::get<0>(vecNormal[point_normal2]), std::get<1>(vecNormal[point_normal2]), std::get<2>(vecNormal[point_normal2]) },
-					//					Vertex{std::get<0>(vecVertex[point3]), std::get<1>(vecVertex[point3]), std::get<2>(vecVertex[point3]), std::get<0>(vecNormal[point_normal3]), std::get<1>(vecNormal[point_normal3]), std::get<2>(vecNormal[point_normal3])} });
-					}
-					nCounterVertex++;
 				}
 			}
-			if (SDL_GetTicks() > nOldTime)
-			{
-				nOldTime = SDL_GetTicks() + 200;
-				SDL_Rect Rect { 0, 0, SCREEN_WIDTH * in.tellg() / nLengthFile, 38 };
-				SDL_SetRenderDrawColor(renderer, 0, 0, 255, SDL_ALPHA_OPAQUE);
-				SDL_RenderFillRect(renderer, &Rect);
-				SDL_RenderPresent(renderer);
-			}
 		}
-		SDL_Rect Rect { 0, 0, SCREEN_WIDTH, 38 };
-		SDL_SetRenderDrawColor(renderer, 0, 0, 255, SDL_ALPHA_OPAQUE);
-		SDL_RenderFillRect(renderer, &Rect);
-		SDL_RenderPresent(renderer);
+		threadOfProgressBar.join();
+		in.close();
 	}
+}
+
+std::vector<std::string> Mesh::Split(const std::string_view& s, char sep) const
+{
+	std::vector<std::string> vecStrings;
+	auto it1 = s.begin();
+	bool bIsNotSeparator = false;
+	for (auto it = s.begin(); it != s.end(); ++it)
+	{
+		if (*it != sep && !bIsNotSeparator)
+		{
+			it1 = it;
+			bIsNotSeparator = true;
+		}
+		if (*it == sep && bIsNotSeparator)
+		{
+			bIsNotSeparator = false;
+			vecStrings.emplace_back(it1, it);
+		}
+	}
+	if (bIsNotSeparator)
+		vecStrings.emplace_back(it1, s.end());
+	return vecStrings;
 }
