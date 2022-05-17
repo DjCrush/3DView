@@ -1,14 +1,10 @@
 #pragma once
 #include <vector>
 #include <string>
-#include <cmath>
 #include "graphicslib.h"
 #include <SDL.h>
 #include <fstream>
-#include <sstream>
 #include <iostream>
-#include <SDL_timer.h>
-#include <tuple>
 #include <thread>
 #include <chrono>
 
@@ -19,27 +15,24 @@ public:
 		double dX;
 		double dY;
 		double dZ; 
-		double dXN;
-		double dYN;
-		double dZN;
 	};
 	struct Face
 	{
-		Vertex vertex1;
-		Vertex vertex2;
-		Vertex vertex3;
+		int iEl1;
+		int iEl2;
+		int iEl3;
 	};
 	Mesh() = default;
 	void Draw(int nX, int nY, double dScale) const;
 	void DrawGuro(int nX, int nY, double dScale) const;
 	void Rotate(double dAngleX);
 	void CreateFromFile(const std::string& sFileName);
+	void CorrectXYZ();
 private:
-	double m_dLightX{ 0.0 };
-	double m_dLightY{ 0.0 };
-	double m_dLightZ{ 1.0 };
+	Vertex m_TLight{ 0.0, 0.0, 1.0 };
 	double m_dDist{ 35500.0 };
 	
-	std::vector<std::string> Split(const std::string_view& s, char sep = ' ') const;
-	std::vector <Face> m_vecFace;
+	std::vector <Face> m_vecFaces;
+	std::vector <Vertex> m_vecVertices;
+	std::vector <Vertex> m_vecNormales;
 };
