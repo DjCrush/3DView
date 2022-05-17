@@ -20,6 +20,8 @@ int main(int argc, char *argv[])
 	SDL_Window* window = nullptr;
 	int keypress = 0;
 	double scale = 1.0;
+	bool bIsDrawGuro = true;
+	bool bIsRun = true;
 	if (SDL_Init(SDL_INIT_VIDEO) < 0) return 1;
 
 	window = SDL_CreateWindow(
@@ -34,7 +36,7 @@ int main(int argc, char *argv[])
 	Mesh mesh;
 	mesh.CreateFromFile(argv[1]);
 	mesh.CorrectXYZ();
-	while (!keypress)
+	while (bIsRun)
 	{
 		while (SDL_PollEvent(&event))
 		{
@@ -51,17 +53,20 @@ int main(int argc, char *argv[])
 					}
 				break;
 				case SDL_QUIT:
-					keypress = 1;
+					bIsRun = false;
 					break;
 				case SDL_KEYDOWN:
-					keypress = 1;
+					bIsDrawGuro = !bIsDrawGuro;
 					break;
 			}
 		}
 		SDL_SetRenderDrawColor(renderer, 0, 0, 180, SDL_ALPHA_OPAQUE);
 		SDL_RenderClear(renderer);
 		ResetZBuffer();
-		mesh.Draw(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, std::exp(scale));
+		if(bIsDrawGuro && mesh.NormalesAreExist())
+			mesh.DrawGouraud(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, std::exp(scale));
+		else
+			mesh.Draw(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, std::exp(scale));
 		SDL_RenderPresent(renderer);
 		mesh.Rotate(1);
 	}
