@@ -19,10 +19,11 @@ int main(int argc, char *argv[])
 	SDL_Event event;
 	SDL_Window* window = nullptr;
 	int keypress = 0;
+	double scale = 1.0;
 	if (SDL_Init(SDL_INIT_VIDEO) < 0) return 1;
 
 	window = SDL_CreateWindow(
-		"ObjViewer",                  // window title
+		"3DView",                  // window title
 		SDL_WINDOWPOS_UNDEFINED,           // initial x position
 		SDL_WINDOWPOS_UNDEFINED,           // initial y position
 		SCREEN_WIDTH,                               // width, in pixels
@@ -32,25 +33,37 @@ int main(int argc, char *argv[])
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_SOFTWARE);
 	Mesh mesh;
 	mesh.CreateFromFile(argv[1]);
+	mesh.CorrectXYZ();
 	while (!keypress)
 	{
 		while (SDL_PollEvent(&event))
 		{
-			switch (event.type)
+			switch(event.type)
 			{
-			case SDL_QUIT:
-				keypress = 1;
+				case SDL_MOUSEWHEEL:
+					if (event.wheel.y > 0) 
+					{
+						scale += 0.1;
+					}
+					else if (event.wheel.y < 0)
+					{
+						scale -= 0.1;
+					}
 				break;
-			case SDL_KEYDOWN:
-				keypress = 1;
-				break;
+				case SDL_QUIT:
+					keypress = 1;
+					break;
+				case SDL_KEYDOWN:
+					keypress = 1;
+					break;
 			}
 		}
+		SDL_SetRenderDrawColor(renderer, 0, 0, 180, SDL_ALPHA_OPAQUE);
 		SDL_RenderClear(renderer);
-		ClearScreen();
-		mesh.Draw(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 0.50);
-		mesh.Rotate(1);
+		ResetZBuffer();
+		mesh.Draw(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, std::exp(scale));
 		SDL_RenderPresent(renderer);
+		mesh.Rotate(1);
 	}
 	delete[] Z_buffer;
 	SDL_FreeSurface(font);
