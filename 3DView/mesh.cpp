@@ -1,6 +1,6 @@
 #include "mesh.h"
 
-void Mesh::DrawGuro(int nX, int nY, double dScale) const
+void Mesh::DrawGouraud(int nX, int nY, double dScale) const
 {
 	for (const auto& objFace : m_vecFaces)
 	{
@@ -61,8 +61,7 @@ void Mesh::Draw(int nX, int nY, double dScale) const
 		double y1 = m_dDist * dScale * m_vecVertices[objFace.iEl1].dY / (m_dDist - m_vecVertices[objFace.iEl1].dZ * dScale) + nY;
 		double y2 = m_dDist * dScale * m_vecVertices[objFace.iEl2].dY / (m_dDist - m_vecVertices[objFace.iEl2].dZ * dScale) + nY;
 		double y3 = m_dDist * dScale * m_vecVertices[objFace.iEl3].dY / (m_dDist - m_vecVertices[objFace.iEl3].dZ * dScale) + nY;
-		Triangle(x1, y1, m_vecVertices[objFace.iEl1].dZ * dScale, x2, y2, m_vecVertices[objFace.iEl2].dZ * dScale, x3, y3, 
-			 m_vecVertices[objFace.iEl3].dZ * dScale, dIntensity);
+		Triangle(x1, y1, m_vecVertices[objFace.iEl1].dZ * dScale, x2, y2, m_vecVertices[objFace.iEl2].dZ * dScale, x3, y3, m_vecVertices[objFace.iEl3].dZ * dScale, dIntensity);
 	}
 }
 
@@ -224,4 +223,9 @@ void Mesh::CorrectXYZ()
 		objVertex.dY += dShiftY;
 		objVertex.dZ += dShiftZ;
 	}
+}
+
+bool Mesh::NormalesAreExist() const
+{
+	return !m_vecNormales.empty();
 }
