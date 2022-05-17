@@ -1,6 +1,6 @@
 #pragma once
-#include <vector>
 #include <SDL.h>
+#include <utility>
 #include <limits>
 
 const int SCREEN_WIDTH = 1600;
@@ -12,6 +12,6 @@ extern SDL_Surface* font;
 
 extern int* Z_buffer;
 
-void ClearScreen();
+void ResetZBuffer();
 void Triangle(int x1, int y1, int z1, int x2, int y2, int z2, int x3, int y3, int z3, int col);
 void TriangleGradient(int x1, int y1, int z1, int x2, int y2, int z2, int x3, int y3, int z3, int col1, int col2, int col3);
