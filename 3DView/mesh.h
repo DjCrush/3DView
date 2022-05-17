@@ -10,6 +10,7 @@
 #include <SDL_timer.h>
 #include <tuple>
 #include <thread>
+#include <chrono>
 
 class Mesh {
 public:
@@ -29,16 +30,16 @@ public:
 		Vertex vertex3;
 	};
 	Mesh() = default;
-	void Draw(int nX, int nY, double dScale);
-	void DrawGuro(int nX, int nY, double dScale);
+	void Draw(int nX, int nY, double dScale) const;
+	void DrawGuro(int nX, int nY, double dScale) const;
 	void Rotate(double dAngleX);
-	void ReadOBJFile(const char* filename);
-	void ReadFromFile(const std::string& sFileName);
+	void CreateFromFile(const std::string& sFileName);
 private:
 	double m_dLightX{ 0.0 };
 	double m_dLightY{ 0.0 };
 	double m_dLightZ{ 1.0 };
 	double m_dDist{ 35500.0 };
-	void DrawProgressWidget();
+	
+	std::vector<std::string> Split(const std::string_view& s, char sep = ' ') const;
 	std::vector <Face> m_vecFace;
 };
