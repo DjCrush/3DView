@@ -24,10 +24,11 @@ public:
 	};
 	Mesh() = default;
 	void Draw(int nX, int nY, double dScale) const;
-	void DrawGuro(int nX, int nY, double dScale) const;
+	void DrawGouraud(int nX, int nY, double dScale) const;
 	void Rotate(double dAngleX);
 	void CreateFromFile(const std::string& sFileName);
 	void CorrectXYZ();
+	bool NormalesAreExist() const;
 private:
 	Vertex m_TLight{ 0.0, 0.0, 1.0 };
 	double m_dDist{ 35500.0 };
