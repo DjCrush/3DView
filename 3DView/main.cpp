@@ -1,5 +1,4 @@
 #include <SDL.h>
-#include <Windows.h>
 #include "graphicslib.h"
 #include "mesh.h"
 
@@ -10,8 +9,13 @@ SDL_Surface* font;
 SDL_Renderer* renderer;
 int* Z_buffer = new int[SCREEN_WIDTH * SCREEN_HEIGHT];
 
-int main()
+int main(int argc, char *argv[])
 {
+	if(argc < 2)
+	{
+		std::cerr << "USAGE: 3DView <filename>" << std::endl;
+		return -1;
+	}
 	SDL_Event event;
 	SDL_Window* window = nullptr;
 	int keypress = 0;
@@ -26,15 +30,8 @@ int main()
 		SDL_WINDOW_OPENGL                  // flags - see below
 	);
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_SOFTWARE);
-	if (!(font = SDL_LoadBMP("font.bmp")))
-	{
-		MessageBoxA(NULL, "File 'font.bmp' not found", "Error", MB_OK);
-		SDL_Quit();
-		return 1;
-	}
-	Mesh tor;
-	//tor.ReadOBJFile("E:/EXP/3dmax/obj/1.obj");
-	tor.ReadFromFile("E:/EXP/3dmax/obj/bmw.obj");
+	Mesh mesh;
+	mesh.CreateFromFile(argv[1]);
 	while (!keypress)
 	{
 		while (SDL_PollEvent(&event))
@@ -51,9 +48,8 @@ int main()
 		}
 		SDL_RenderClear(renderer);
 		ClearScreen();
-		//tor.Draw(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 120.0);
-		tor.DrawGuro(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 300.0);
-		tor.Rotate(1);
+		mesh.Draw(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 0.50);
+		mesh.Rotate(1);
 		SDL_RenderPresent(renderer);
 	}
 	delete[] Z_buffer;
